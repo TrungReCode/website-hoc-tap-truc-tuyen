@@ -2,8 +2,6 @@
 
 Hệ thống e-learning full-stack: khóa học tự học + lớp học có giảng viên, thanh toán VNPay, diễn đàn, quiz, cấp chứng chỉ PDF có mã xác thực QR. Ban đầu là đồ án tốt nghiệp, đã qua một đợt rà soát bảo mật/hiệu năng và refactor hạ tầng lưu trữ sau khi bảo vệ.
 
-**Demo:** <!-- TODO: dán link deploy thật vào đây --> | **Video demo 2 phút:** <!-- TODO -->
-
 ## Tech stack
 
 **Backend:** Java 21, Spring Boot 3.2, Spring Security, Spring Data JPA, PostgreSQL, Redis, Flyway
@@ -37,4 +35,4 @@ Cần cấu hình biến môi trường cho VNPay (sandbox), Cloudinary, và Clo
 
 ## Trạng thái dự án
 
-Dự án đã hoàn thành phần đồ án tốt nghiệp. Đang trong quá trình bổ sung test tự động và CI cho mục đích portfolio — xem [Issues](../../issues) <!-- TODO: xóa dòng này nếu không dùng GitHub Issues --> để biết việc còn lại.
+Dự án đã hoàn thành phần cơ bản và có thể tiếp tục cải thiện.
