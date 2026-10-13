@@ -1,0 +1,1 @@
+ALTER TABLE lop_hoc ADD COLUMN mua_khoa_hoc_goc BOOLEAN DEFAULT TRUE;

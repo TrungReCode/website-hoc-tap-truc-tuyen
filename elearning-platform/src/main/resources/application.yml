@@ -1,0 +1,210 @@
+spring:
+  application:
+    name: elearning-platform
+
+  profiles:
+    active: dev
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # Flyway quản lý schema — Hibernate KHÔNG được tự tạo/sửa bảng
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+  mvc:
+    async:
+      request-timeout: 300000 # Cho phép chờ 5 phút (300,000ms)
+
+server:
+  address: 0.0.0.0
+  port: 8080
+
+# Cấu hình JWT dùng chung mọi môi trường (secret thật nên đặt qua biến môi trường ở -dev/-prod)
+app:
+  jwt:
+    access-token-expiration-ms: 60000      # 1 phút để test refresh token, deploy thật nên 15 phút (900,000ms)
+    refresh-token-expiration-ms: 604800000  # 7 ngày
+  cookie:
+    # FIX (Vấn đề #2 — accessToken/refreshToken chuyển từ localStorage sang
+    # cookie HttpOnly, xem CongCuCookie): cờ Secure yêu cầu kết nối HTTPS,
+    # nên bắt buộc true ở prod (ghi đè bên dưới) và mặc định false ở dev vì
+    # chạy HTTP thuần trên localhost.
+    secure: false
+
+---
+# ══════════════════════ Profile: dev ══════════════════════
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/elearning_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6380}
+
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAILTRAP_USERNAME:}
+    password: ${MAILTRAP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    '[com.elearning]': DEBUG
+    '[org.hibernate.SQL]': DEBUG
+    '[org.flywaydb]': INFO
+
+# Thư mục ghi/đọc audit log (logback-spring.xml + NhatKyHeThongDichVuImpl) —
+# cố định tuyệt đối, KHÔNG phụ thuộc thư mục làm việc (user.dir) lúc khởi
+# động JVM, vốn có thể khác nhau tùy chạy bằng IntelliJ, terminal, hay jar.
+he-thong:
+  thu-muc-log: ${LOG_DIR:./logs}
+
+# Placeholder cho dev — điền giá trị thật khi tích hợp từng module
+app:
+  jwt:
+    # Giá trị mặc định chỉ dùng cho dev cục bộ; khuyến nghị set JWT_SECRET thật
+    # trong môi trường production hoặc file .env riêng không commit.
+    secret: ${JWT_SECRET:change-me-to-a-strong-secret-at-least-32-chars}
+  # Frontend URL nên được định nghĩa qua biến môi trường để tránh hardcode IP/host.
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+
+# FIX: giá trị dưới đây là merchant TEST/sandbox công khai của VNPay (không
+# phải tiền thật), nhưng vẫn chuyển sang ${BIẾN:mặc_định} cho nhất quán với
+# cloudinary/firebase và để dễ đổi sang merchant sandbox khác nếu cần mà
+# không phải sửa file đã commit.
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE:demo-tmn-code}
+  hash-secret: ${VNPAY_HASH_SECRET:change-me-to-your-vnpay-sandbox-secret}
+  pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  return-url: ${VNPAY_RETURN_URL:http://localhost:5173/thanh-toan/ket-qua}
+  ipn-url: ${VNPAY_IPN_URL:http://localhost:8080/api/thanh-toan/vnpay-ipn}
+  refund-api-url: ${VNPAY_REFUND_API_URL:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  proxy: "${CLOUDINARY_PROXY:}"
+
+# FIX (chuyển lưu trữ Firebase Storage -> Cloudflare R2): endpoint S3-compatible
+# của R2 được GHÉP TỪ account-id (https://<account-id>.r2.cloudflarestorage.com),
+# không cấu hình trực tiếp — xem CauHinhR2. public-base-url là domain công khai
+# đọc file (Public Development URL dạng pub-xxxx.r2.dev, hoặc domain tùy chỉnh
+# đã gắn cho bucket trên Cloudflare Dashboard) — KHÔNG phải endpoint S3 ở trên.
+#
+# FIX (tách bucket riêng tư): private-bucket là bucket THỨ HAI, KHÔNG bao giờ
+# bật Public Development URL hay Custom Domain — chỉ AdapterLuuTruHoSoXacThuc
+# (hồ sơ xác thực giảng viên) dùng, đọc qua S3 API có credentials chứ không
+# qua URL công khai nào. Cùng account-id/access-key/secret-key với bucket
+# công khai ở trên — chỉ cần token có quyền trên cả 2 bucket.
+r2:
+  account-id: ${R2_ACCOUNT_ID:}
+  access-key-id: ${R2_ACCESS_KEY_ID:}
+  secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+  bucket: ${R2_BUCKET:}
+  public-base-url: "${R2_PUBLIC_BASE_URL:}"
+  private-bucket: ${R2_PRIVATE_BUCKET:}
+
+---
+# ══════════════════════ Profile: prod ══════════════════════
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6380}
+      password: ${REDIS_PASSWORD:}
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    com.elearning: INFO
+    org.hibernate.SQL: WARN
+
+he-thong:
+  thu-muc-log: ${LOG_DIR:./logs}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  cookie:
+    secure: ${COOKIE_SECURE:true}
+  frontend-url: ${FRONTEND_URL}
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  pay-url: ${VNPAY_PAY_URL:https://pay.vnpay.vn/vpcpay.html}
+  return-url: ${VNPAY_RETURN_URL}
+  ipn-url: ${VNPAY_IPN_URL}
+  refund-api-url: ${VNPAY_REFUND_API_URL:https://pay.vnpay.vn/merchant_webapi/api/transaction}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
+r2:
+  account-id: ${R2_ACCOUNT_ID}
+  access-key-id: ${R2_ACCESS_KEY_ID}
+  secret-access-key: ${R2_SECRET_ACCESS_KEY}
+  bucket: ${R2_BUCKET}
+  public-base-url: ${R2_PUBLIC_BASE_URL}
+  private-bucket: ${R2_PRIVATE_BUCKET}

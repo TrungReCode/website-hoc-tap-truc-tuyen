@@ -1,0 +1,2 @@
+ALTER TABLE ket_qua_lam_bai
+ALTER COLUMN ma_lop DROP NOT NULL;

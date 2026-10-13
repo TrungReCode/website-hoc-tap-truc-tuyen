@@ -1,0 +1,439 @@
+.tc-loading {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+
+/* ===== Tổng quan ===== */
+
+.tc-overview-group {
+  margin-bottom: 24px;
+}
+
+.tc-overview-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+}
+
+.tc-overview-grid .stat-card {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.tc-overview-grid .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  border-color: rgba(26, 111, 212, 0.18);
+}
+
+.tc-money-success {
+  font-size: 18px;
+  color: var(--success);
+}
+
+.tc-money-primary {
+  font-size: 18px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.tc-text-success {
+  color: var(--success);
+}
+
+.tc-text-warning {
+  color: var(--warning);
+}
+
+.tc-text-danger {
+  color: var(--danger);
+}
+
+.tc-stat-alert {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(254, 243, 199, 0.42) 0%,
+    var(--white) 100%
+  );
+}
+
+/* ===== Tab bar ===== */
+
+.tc-tabbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tc-tabbar .btn {
+  border-radius: 10px;
+  min-height: 34px;
+  padding-inline: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.tc-tabbar .btn-primary {
+  box-shadow: 0 8px 18px rgba(26, 111, 212, 0.22);
+}
+
+.tc-tab-badge {
+  margin-left: 8px;
+}
+
+/* ===== Card chính ===== */
+
+.tc-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.tc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.tc-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tc-card-subtitle {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+
+/* ===== Bộ lọc ===== */
+
+.tc-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.tc-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tc-filter-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.tc-filter-search {
+  display: flex;
+  gap: 8px;
+}
+
+.tc-filter-search .form-input {
+  flex: 1;
+}
+
+/* ===== Thanh thao tác ===== */
+
+.tc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tc-toolbar-left,
+.tc-toolbar-right {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tc-toolbar-right {
+  justify-content: flex-end;
+}
+
+/* ===== Bảng dữ liệu ===== */
+
+.tc-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+.tc-table-wrap .data-table {
+  min-width: 1080px;
+  margin-bottom: 0;
+}
+
+.tc-table-wrap .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+  white-space: nowrap;
+}
+
+.tc-table-wrap .data-table td {
+  vertical-align: top;
+}
+
+.tc-table-wrap .data-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.tc-table-wrap .data-table tbody tr:hover td {
+  background: rgba(26, 111, 212, 0.035);
+}
+
+.tc-table-link {
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tc-table-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== Trạng thái ===== */
+
+.tc-status-badge {
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+}
+
+/* ===== Thanh chọn hàng loạt ===== */
+
+.tc-bulkbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 111, 212, 0.22);
+  background: linear-gradient(
+    180deg,
+    rgba(230, 241, 251, 0.95) 0%,
+    rgba(248, 250, 252, 0.95) 100%
+  );
+}
+
+.tc-bulkbar strong {
+  font-size: 13px;
+}
+
+.tc-bulkbar-spacer {
+  flex: 1;
+}
+
+/* ===== Tổng hợp theo giảng viên ===== */
+
+.tc-summary-strip {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0.95) 0%,
+    var(--white) 100%
+  );
+}
+
+.tc-summary-item {
+  min-width: 180px;
+}
+
+.tc-summary-label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+}
+
+.tc-summary-value {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tc-summary-value.primary {
+  color: var(--primary);
+}
+
+.tc-summary-value.success {
+  color: var(--success);
+}
+
+/* ===== Drawer / chi tiết ===== */
+
+.tc-detail-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(248, 250, 252, 0.96) 0%,
+    var(--white) 100%
+  );
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.tc-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tc-detail-item {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  padding: 14px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tc-detail-item:hover {
+  border-color: rgba(26, 111, 212, 0.2);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.tc-detail-item.clickable {
+  cursor: pointer;
+}
+
+.tc-detail-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.tc-detail-item-title {
+  font-weight: 700;
+}
+
+.tc-detail-item-meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.tc-detail-item-date {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ===== Phân trang ===== */
+
+.tc-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.tc-pagination-info {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.tc-pagination-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== Empty state ===== */
+
+.tc-empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 900px) {
+  .tc-card-header {
+    align-items: flex-start;
+  }
+
+  .tc-toolbar {
+    align-items: stretch;
+  }
+
+  .tc-toolbar-left,
+  .tc-toolbar-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .tc-tabbar {
+    flex-direction: column;
+  }
+
+  .tc-tabbar .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tc-summary-strip {
+    gap: 16px;
+  }
+
+  .tc-summary-item {
+    min-width: calc(50% - 8px);
+  }
+
+  .tc-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tc-pagination-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

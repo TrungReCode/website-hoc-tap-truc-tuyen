@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- base.xml = cấu hình logging mặc định đầy đủ của Spring Boot (console
+         appender, root logger, tôn trọng logging.level.* trong application.yml).
+         Đây là cách Spring Boot khuyến nghị để MỞ RỘNG cấu hình log mặc định
+         mà không làm mất bất kỳ hành vi log hiện có nào. -->
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <!-- Đọc property he-thong.thu-muc-log từ application.yml (mọi profile) —
+         cùng 1 nguồn với NhatKyHeThongDichVuImpl, đảm bảo bên ghi và bên đọc
+         audit log luôn thống nhất 1 thư mục, bất kể JVM khởi động từ đâu. -->
+    <springProperty scope="context" name="thuMucLog" source="he-thong.thu-muc-log" defaultValue="./logs"/>
+
+    <!--
+        Ghi nhật ký (audit log) cho các hành động nhạy cảm của Quản trị viên
+        (UC-13 Quản trị hệ thống): khóa/mở khóa tài khoản, thu hồi quyền quản
+        trị viên, tạo tài khoản admin, sửa thông số hệ thống toàn cục.
+
+        Vì yêu cầu KHÔNG chỉnh sửa CSDL (không thêm bảng nhat_ky_hanh_dong),
+        audit log được ghi ra file riêng thay vì lưu DB — vẫn thỏa mãn yêu
+        cầu "ghi nhận nhật ký", tra cứu được bằng cách mở/grep logs/audit.log,
+        và không đụng tới schema Postgres.
+    -->
+    <appender name="FILE_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${thuMucLog}/audit.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${thuMucLog}/audit-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>90</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- additivity="true": entry vẫn hiện trên console như log bình thường
+         (tiện theo dõi lúc demo/dev), đồng thời được ghi bền vào file riêng. -->
+    <logger name="AUDIT" level="INFO" additivity="true">
+        <appender-ref ref="FILE_AUDIT"/>
+    </logger>
+
+</configuration>

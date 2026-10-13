@@ -1,0 +1,33 @@
+# ===== Dữ liệu vận hành / bí mật — KHÔNG BAO GIỜ commit =====
+logs/
+elearning-platform/logs/
+*.log
+.env
+.env.*
+!.env.example
+**/serviceAccountKey*.json
+**/firebase-adminsdk*.json
+
+# ===== Backend: elearning-platform (Maven / Spring Boot) =====
+elearning-platform/target/
+elearning-platform/.mvn/wrapper/maven-wrapper.jar
+elearning-platform/HELP.md
+
+# ===== Frontend: elearning-platform-frontend (Vite / React) =====
+elearning-platform-frontend/node_modules/
+elearning-platform-frontend/dist/
+elearning-platform-frontend/dist-ssr/
+elearning-platform-frontend/.vite/
+elearning-platform-frontend/*.local
+
+# ===== Node ở gốc repo (set-cors.js, package.json) =====
+node_modules/
+# Lưu ý: KHÔNG ignore package-lock.json — nên commit để đảm bảo cài đặt
+# lại đúng phiên bản dependency, kể cả với script phụ trợ như set-cors.js.
+
+# ===== IDE / hệ điều hành =====
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
