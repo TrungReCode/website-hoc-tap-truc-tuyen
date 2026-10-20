@@ -7,6 +7,7 @@ public record PhanHoiCauHoiTrongLop(
         String noiDung,
         Integer viTri,
         String loaiCauHoi,
-        List<PhanHoiDapAnAn> dapAn
+        List<PhanHoiDapAnAn> dapAn,
+        List<String> luaChonGhep // vế phải của câu GHEP_CAP đã xáo trộn; rỗng với dạng khác
 ) {
 }

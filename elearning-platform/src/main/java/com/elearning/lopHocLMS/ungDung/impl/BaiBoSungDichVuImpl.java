@@ -1,12 +1,12 @@
 package com.elearning.lopHocLMS.ungDung.impl;
 
+import com.elearning.dungChung.cauHoi.QuyTacCauHoi;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeDuLieuKhongHopLe;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeKhongCoQuyen;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeKhongTimThay;
 import com.elearning.lopHocLMS.giaoDien.dto.phanHoi.PhanHoiCauHoiBoSung;
 import com.elearning.lopHocLMS.giaoDien.dto.phanHoi.PhanHoiMucGiaoTrinhLai;
 import com.elearning.lopHocLMS.giaoDien.dto.yeuCau.YeuCauCapNhatBaiBoSung;
-import com.elearning.lopHocLMS.giaoDien.dto.yeuCau.YeuCauDapAnBoSung;
 import com.elearning.lopHocLMS.giaoDien.dto.yeuCau.YeuCauTaoBaiBoSung;
 import com.elearning.lopHocLMS.giaoDien.dto.yeuCau.YeuCauTaoCauHoiBoSung;
 import com.elearning.lopHocLMS.haTang.BaiHocBoSungKho;
@@ -135,14 +135,13 @@ class BaiBoSungDichVuImpl implements BaiBoSungDichVu {
         BaiKiemTraBoSung bkt = baiKiemTraBoSungKho.findByBaiBoSung_MaBaiHocBoSung(maBaiHocBoSung)
                 .orElseThrow(() -> NgoaiLeKhongTimThay.cuaTaiNguyen("bài kiểm tra bổ sung cho bài", maBaiHocBoSung));
 
-        boolean coDapAnDung = yeuCau.dapAn().stream().anyMatch(YeuCauDapAnBoSung::dapAnDung);
-        if (!coDapAnDung) {
-            throw new NgoaiLeDuLieuKhongHopLe("Câu hỏi cần có ít nhất 1 đáp án đúng");
-        }
-
         LoaiCauHoiBoSung loai = parseLoai(yeuCau.loaiCauHoi());
+        // Quy tắc hợp lệ theo từng dạng câu hỏi dùng chung với quiz của khóa học gốc.
+        QuyTacCauHoi.kiemTraHopLe(loai.name(), yeuCau.dapAn() == null ? null : yeuCau.dapAn().stream()
+                .map(d -> new QuyTacCauHoi.DapAn(d.id(), d.noiDung(), d.noiDungGhep(), d.dapAnDung()))
+                .toList());
         List<DapAnBoSung> dapAn = yeuCau.dapAn().stream()
-                .map(d -> new DapAnBoSung(d.id(), d.noiDung(), d.dapAnDung())).toList();
+                .map(d -> new DapAnBoSung(d.id(), d.noiDung(), d.dapAnDung(), d.noiDungGhep())).toList();
         cauHoiBoSungKho.save(new CauHoiBoSung(bkt, yeuCau.noiDung(), yeuCau.viTri(), loai, dapAn));
     }
 

@@ -12,5 +12,8 @@ package com.elearning.choKhoaHoc.mienDomain.enumDomain;
 public enum LoaiCauHoi {
     MOT_DAP_AN,    // chỉ 1 đáp án đúng (radio button)
     NHIEU_DAP_AN,  // nhiều đáp án đúng (checkbox)
-    DUNG_SAI       // câu hỏi Đúng/Sai
+    DUNG_SAI,      // câu hỏi Đúng/Sai
+    TRA_LOI_NGAN,  // học viên gõ câu trả lời, so khớp với các đáp án giảng viên chấp nhận
+    SAP_XEP,       // học viên sắp xếp các đáp án theo thứ tự đúng
+    GHEP_CAP       // học viên ghép các cặp đáp án đúng
 }

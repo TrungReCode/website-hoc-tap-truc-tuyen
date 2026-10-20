@@ -4,5 +4,8 @@ package com.elearning.lopHocLMS.mienDomain.enumDomain;
 public enum LoaiCauHoiBoSung {
     MOT_DAP_AN,
     NHIEU_DAP_AN,
-    DUNG_SAI
+    DUNG_SAI,
+    TRA_LOI_NGAN,
+    SAP_XEP,
+    GHEP_CAP
 }

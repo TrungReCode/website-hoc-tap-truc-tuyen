@@ -6,5 +6,5 @@ package com.elearning.lopHocLMS.giaoDien.dto.phanHoi;
  * không có trường này để chống lộ đáp án). KHÔNG dùng DTO này cho bất kỳ
  * luồng nào liên quan tới học viên đang làm bài.
  */
-public record PhanHoiDapAnChoAdmin(Integer id, String noiDung, Boolean dapAnDung) {
+public record PhanHoiDapAnChoAdmin(Integer id, String noiDung, Boolean dapAnDung, String noiDungGhep) {
 }

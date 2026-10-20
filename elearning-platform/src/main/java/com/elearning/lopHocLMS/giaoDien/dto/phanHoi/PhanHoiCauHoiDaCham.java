@@ -7,6 +7,9 @@ public record PhanHoiCauHoiDaCham(
         String noiDung,
         List<PhanHoiDapAn> dapAn, // có dapAnDung — chỉ trả sau khi đã nộp bài
         List<Integer> dsMaDapAnDaChon,
-        boolean dungCauNay
+        boolean dungCauNay,
+        String loaiCauHoi,
+        String traLoiVanBan,                 // chỉ có với câu TRA_LOI_NGAN
+        List<PhanHoiCapGhep> capGhepDaNoi    // chỉ có với câu GHEP_CAP
 ) {
 }

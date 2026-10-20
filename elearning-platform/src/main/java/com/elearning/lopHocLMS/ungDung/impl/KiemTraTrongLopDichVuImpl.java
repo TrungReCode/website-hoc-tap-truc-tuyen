@@ -4,6 +4,7 @@ import com.elearning.choKhoaHoc.giaoDien.dto.phanHoi.PhanHoiBaiHoc;
 import com.elearning.choKhoaHoc.haTang.BaiHocKho;
 import com.elearning.choKhoaHoc.mienDomain.BaiHoc;
 import com.elearning.choKhoaHoc.ungDung.QuanLyNoiDungDichVu;
+import com.elearning.dungChung.cauHoi.QuyTacCauHoi;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeDuLieuKhongHopLe;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeKhongCoQuyen;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeKhongTimThay;
@@ -56,10 +57,7 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
                 }
                 var bkt = baiHoc.baiKiemTra();
                 List<PhanHoiCauHoiTrongLop> dsCauHoi = bkt.danhSachCauHoi().stream()
-                                .map(c -> new PhanHoiCauHoiTrongLop(
-                                                c.maCauHoi(), c.noiDung(), c.viTri(), c.loaiCauHoi(),
-                                                c.dapAn().stream().map(d -> new PhanHoiDapAnAn(d.id(), d.noiDung()))
-                                                                .toList()))
+                                .map(c -> sangCauHoiChoHocVien(tuCauHoiGoc(c), c.viTri()))
                                 .toList();
 
                 return new PhanHoiDeKiemTra("GOC", bkt.maBaiKiemTra(), baiHoc.tieuDe(),
@@ -78,10 +76,7 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
                 }
                 var bkt = baiHoc.baiKiemTra();
                 List<PhanHoiCauHoiTrongLop> dsCauHoi = bkt.danhSachCauHoi().stream()
-                                .map(c -> new PhanHoiCauHoiTrongLop(
-                                                c.maCauHoi(), c.noiDung(), c.viTri(), c.loaiCauHoi(),
-                                                c.dapAn().stream().map(d -> new PhanHoiDapAnAn(d.id(), d.noiDung()))
-                                                                .toList()))
+                                .map(c -> sangCauHoiChoHocVien(tuCauHoiGoc(c), c.viTri()))
                                 .toList();
 
                 return new PhanHoiDeKiemTra("GOC", bkt.maBaiKiemTra(), baiHoc.tieuDe(),
@@ -105,11 +100,7 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
                 List<PhanHoiCauHoiTrongLop> dsCauHoi = cauHoiBoSungKho
                                 .findByBaiKiemTraBoSung_MaBaiKiemTraBoSungOrderByViTriAsc(bkt.getMaBaiKiemTraBoSung())
                                 .stream()
-                                .map(c -> new PhanHoiCauHoiTrongLop(
-                                                c.getMaCauHoiBaiBoSung(), c.getNoiDung(), c.getViTri(),
-                                                c.getLoaiCauHoi().name(),
-                                                c.getDapAn().stream().map(d -> new PhanHoiDapAnAn(d.id(), d.noiDung()))
-                                                                .toList()))
+                                .map(c -> sangCauHoiChoHocVien(tuCauHoiBoSung(c), c.getViTri()))
                                 .toList();
 
                 return new PhanHoiDeKiemTra("BO_SUNG", bkt.getMaBaiKiemTraBoSung(), b.getTieuDe(),
@@ -238,62 +229,112 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
         private record KetQuaCham(int diem, List<ChiTietDapAnDaChon> chiTiet, List<PhanHoiCauHoiDaCham> chiTietPhoi) {
         }
 
+        /**
+         * Câu hỏi ở dạng trung lập — gom 2 nguồn (quiz khóa học gốc và quiz bổ sung) về cùng
+         * 1 kiểu để chấm điểm / che đáp án / dựng kết quả bằng CHUNG 1 đoạn code (trước đây
+         * chép đôi cho từng nguồn). Mọi quy tắc theo dạng câu hỏi nằm ở QuyTacCauHoi.
+         */
+        private record CauHoiChuan(Long maCauHoi, String noiDung, String loaiCauHoi,
+                        List<QuyTacCauHoi.DapAn> dapAn) {
+        }
+
+        private CauHoiChuan tuCauHoiGoc(com.elearning.choKhoaHoc.giaoDien.dto.phanHoi.PhanHoiCauHoi c) {
+                return new CauHoiChuan(c.maCauHoi(), c.noiDung(), c.loaiCauHoi(),
+                                c.dapAn().stream()
+                                                .map(d -> new QuyTacCauHoi.DapAn(d.id(), d.noiDung(), d.noiDungGhep(),
+                                                                Boolean.TRUE.equals(d.dapAnDung())))
+                                                .toList());
+        }
+
+        private CauHoiChuan tuCauHoiBoSung(CauHoiBoSung c) {
+                return new CauHoiChuan(c.getMaCauHoiBaiBoSung(), c.getNoiDung(), c.getLoaiCauHoi().name(),
+                                c.getDapAn().stream()
+                                                .map(d -> new QuyTacCauHoi.DapAn(d.id(), d.noiDung(), d.noiDungGhep(),
+                                                                Boolean.TRUE.equals(d.dapAnDung())))
+                                                .toList());
+        }
+
+        /** Đề gửi cho học viên đang làm bài: đã che mọi thứ có thể lộ đáp án (xem QuyTacCauHoi). */
+        private PhanHoiCauHoiTrongLop sangCauHoiChoHocVien(CauHoiChuan c, Integer viTri) {
+                List<PhanHoiDapAnAn> dapAn = QuyTacCauHoi.anDapAnChoHocVien(c.loaiCauHoi(), c.dapAn()).stream()
+                                .map(d -> new PhanHoiDapAnAn(d.id(), d.noiDung()))
+                                .toList();
+                return new PhanHoiCauHoiTrongLop(c.maCauHoi(), c.noiDung(), viTri, c.loaiCauHoi(), dapAn,
+                                QuyTacCauHoi.luaChonGhepChoHocVien(c.loaiCauHoi(), c.dapAn()));
+        }
+
+        private QuyTacCauHoi.BaiLam baiLamTu(YeuCauCauTraLoi t) {
+                if (t == null) {
+                        return new QuyTacCauHoi.BaiLam(null, null, null);
+                }
+                List<QuyTacCauHoi.CapGhep> capGhep = t.capGhep() == null ? null
+                                : t.capGhep().stream()
+                                                .filter(Objects::nonNull)
+                                                .map(g -> new QuyTacCauHoi.CapGhep(g.maDapAn(), g.noiDungGhep()))
+                                                .toList();
+                return new QuyTacCauHoi.BaiLam(t.dsMaDapAnDaChon(), t.traLoiVanBan(), capGhep);
+        }
+
+        /** Dựng bản xem lại 1 câu (kèm đáp án đúng — chỉ dùng SAU KHI đã nộp bài). */
+        private PhanHoiCauHoiDaCham sangCauHoiDaCham(CauHoiChuan c, ChiTietDapAnDaChon ct) {
+                List<PhanHoiDapAn> dapAn = c.dapAn().stream()
+                                .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), d.dapAnDung(), d.noiDungGhep()))
+                                .toList();
+                return new PhanHoiCauHoiDaCham(c.maCauHoi(), c.noiDung(), dapAn, ct.dsMaDapAnDaChon(),
+                                Boolean.TRUE.equals(ct.dapAnDung()), c.loaiCauHoi(), ct.traLoiVanBan(),
+                                capGhepPhanHoi(ct));
+        }
+
+        private List<PhanHoiCapGhep> capGhepPhanHoi(ChiTietDapAnDaChon ct) {
+                return ct.capGhep() == null ? null
+                                : ct.capGhep().stream().map(g -> new PhanHoiCapGhep(g.maDapAn(), g.noiDungGhep()))
+                                                .toList();
+        }
+
         private KetQuaCham chamDiemGoc(com.elearning.choKhoaHoc.giaoDien.dto.phanHoi.PhanHoiBaiKiemTra bkt,
                         List<YeuCauCauTraLoi> cauTraLoi) {
-                Map<Long, List<Integer>> traLoiMap = cauTraLoi.stream()
-                                .collect(java.util.stream.Collectors.toMap(YeuCauCauTraLoi::maCauHoi,
-                                                c -> c.dsMaDapAnDaChon() != null ? c.dsMaDapAnDaChon() : List.of()));
-
-                List<ChiTietDapAnDaChon> chiTiet = new ArrayList<>();
-                List<PhanHoiCauHoiDaCham> chiTietPhoi = new ArrayList<>();
-                int soDung = 0;
-
-                for (var cauHoi : bkt.danhSachCauHoi()) {
-                        List<Integer> daDaChon = traLoiMap.getOrDefault(cauHoi.maCauHoi(), List.of());
-                        Set<Integer> dapAnDungId = cauHoi.dapAn().stream()
-                                        .filter(d -> Boolean.TRUE.equals(d.dapAnDung())).map(d -> d.id())
-                                        .collect(java.util.stream.Collectors.toSet());
-                        boolean dungCau = new HashSet<>(daDaChon).equals(dapAnDungId);
-                        if (dungCau)
-                                soDung++;
-
-                        chiTiet.add(new ChiTietDapAnDaChon(cauHoi.maCauHoi(), daDaChon, dungCau));
-                        chiTietPhoi.add(new PhanHoiCauHoiDaCham(cauHoi.maCauHoi(), cauHoi.noiDung(),
-                                        cauHoi.dapAn().stream()
-                                                        .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), d.dapAnDung()))
-                                                        .toList(),
-                                        daDaChon, dungCau));
-                }
-                int tongSo = bkt.danhSachCauHoi().size();
-                int diem = tongSo == 0 ? 0 : (int) Math.round(soDung * 100.0 / tongSo);
-                return new KetQuaCham(diem, chiTiet, chiTietPhoi);
+                return chamDiem(bkt.danhSachCauHoi().stream().map(this::tuCauHoiGoc).toList(), cauTraLoi);
         }
 
         private KetQuaCham chamDiemBoSung(List<CauHoiBoSung> dsCauHoi, List<YeuCauCauTraLoi> cauTraLoi,
                         BaiKiemTraBoSung bkt) {
-                Map<Long, List<Integer>> traLoiMap = cauTraLoi.stream()
-                                .collect(java.util.stream.Collectors.toMap(YeuCauCauTraLoi::maCauHoi,
-                                                c -> c.dsMaDapAnDaChon() != null ? c.dsMaDapAnDaChon() : List.of()));
+                return chamDiem(dsCauHoi.stream().map(this::tuCauHoiBoSung).toList(), cauTraLoi);
+        }
+
+        private KetQuaCham chamDiem(List<CauHoiChuan> dsCauHoi, List<YeuCauCauTraLoi> cauTraLoi) {
+                // Học viên gửi trùng mã câu hỏi (cố ý hoặc lỗi client) thì lấy bản cuối, không để
+                // Collectors.toMap ném IllegalStateException làm cả lượt nộp bài thành lỗi 500.
+                Map<Long, YeuCauCauTraLoi> traLoiMap = new HashMap<>();
+                if (cauTraLoi != null) {
+                        for (YeuCauCauTraLoi t : cauTraLoi) {
+                                traLoiMap.put(t.maCauHoi(), t);
+                        }
+                }
 
                 List<ChiTietDapAnDaChon> chiTiet = new ArrayList<>();
                 List<PhanHoiCauHoiDaCham> chiTietPhoi = new ArrayList<>();
                 int soDung = 0;
 
-                for (CauHoiBoSung cauHoi : dsCauHoi) {
-                        List<Integer> daDaChon = traLoiMap.getOrDefault(cauHoi.getMaCauHoiBaiBoSung(), List.of());
-                        Set<Integer> dapAnDungId = cauHoi.getDapAn().stream()
-                                        .filter(d -> Boolean.TRUE.equals(d.dapAnDung())).map(DapAnBoSung::id)
-                                        .collect(java.util.stream.Collectors.toSet());
-                        boolean dungCau = new HashSet<>(daDaChon).equals(dapAnDungId);
+                for (CauHoiChuan cauHoi : dsCauHoi) {
+                        YeuCauCauTraLoi traLoi = traLoiMap.get(cauHoi.maCauHoi());
+                        QuyTacCauHoi.BaiLam baiLam = baiLamTu(traLoi);
+                        boolean dungCau = QuyTacCauHoi.chamDung(cauHoi.loaiCauHoi(), cauHoi.dapAn(), baiLam);
                         if (dungCau)
                                 soDung++;
 
-                        chiTiet.add(new ChiTietDapAnDaChon(cauHoi.getMaCauHoiBaiBoSung(), daDaChon, dungCau));
-                        chiTietPhoi.add(new PhanHoiCauHoiDaCham(cauHoi.getMaCauHoiBaiBoSung(), cauHoi.getNoiDung(),
-                                        cauHoi.getDapAn().stream()
-                                                        .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), d.dapAnDung()))
-                                                        .toList(),
-                                        daDaChon, dungCau));
+                        // Chỉ lưu phần bài làm có ý nghĩa với dạng câu hỏi (các trường còn lại null,
+                        // NON_NULL nên không ghi vào JSONB) — giữ kết quả dạng cũ lưu y hệt như trước.
+                        String loai = cauHoi.loaiCauHoi();
+                        String vanBan = QuyTacCauHoi.TRA_LOI_NGAN.equals(loai) ? baiLam.vanBan() : null;
+                        List<CapGhepDaNoi> capGhep = QuyTacCauHoi.GHEP_CAP.equals(loai)
+                                        ? baiLam.capGhep().stream()
+                                                        .map(g -> new CapGhepDaNoi(g.maDapAn(), g.noiDungGhep()))
+                                                        .toList()
+                                        : null;
+                        ChiTietDapAnDaChon luu = new ChiTietDapAnDaChon(cauHoi.maCauHoi(), baiLam.dsMaDapAn(),
+                                        dungCau, vanBan, capGhep);
+                        chiTiet.add(luu);
+                        chiTietPhoi.add(sangCauHoiDaCham(cauHoi, luu));
                 }
                 int tongSo = dsCauHoi.size();
                 int diem = tongSo == 0 ? 0 : (int) Math.round(soDung * 100.0 / tongSo);
@@ -308,34 +349,31 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
         private PhanHoiKetQuaQuiz sangPhanHoiKetQuaTuLuu(Long maKetQua, int diem, boolean dat, int diemToiThieu,
                         java.time.LocalDateTime thoiDiem, List<ChiTietDapAnDaChon> chiTietLuu,
                         com.elearning.choKhoaHoc.giaoDien.dto.phanHoi.PhanHoiBaiKiemTra bkt) {
-                Map<Long, com.elearning.choKhoaHoc.giaoDien.dto.phanHoi.PhanHoiCauHoi> cauHoiMap = bkt.danhSachCauHoi()
-                                .stream()
-                                .collect(java.util.stream.Collectors.toMap(c -> c.maCauHoi(), c -> c));
-                List<PhanHoiCauHoiDaCham> chiTiet = chiTietLuu.stream().map(ct -> {
-                        var cauHoi = cauHoiMap.get(ct.maCauHoi());
-                        return new PhanHoiCauHoiDaCham(ct.maCauHoi(),
-                                        cauHoi != null ? cauHoi.noiDung() : "—",
-                                        cauHoi != null ? cauHoi.dapAn().stream()
-                                                        .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), d.dapAnDung()))
-                                                        .toList() : List.of(),
-                                        ct.dsMaDapAnDaChon(), ct.dapAnDung());
-                }).toList();
-                return new PhanHoiKetQuaQuiz(maKetQua, diem, dat, diemToiThieu, thoiDiem, chiTiet);
+                Map<Long, CauHoiChuan> cauHoiMap = new HashMap<>();
+                bkt.danhSachCauHoi().forEach(c -> cauHoiMap.put(c.maCauHoi(), tuCauHoiGoc(c)));
+                return dungKetQuaTuLuu(maKetQua, diem, dat, diemToiThieu, thoiDiem, chiTietLuu, cauHoiMap);
         }
 
         private PhanHoiKetQuaQuiz sangPhanHoiKetQuaTuLuuBoSung(Long maKetQua, int diem, boolean dat, int diemToiThieu,
                         java.time.LocalDateTime thoiDiem, List<ChiTietDapAnDaChon> chiTietLuu,
                         List<CauHoiBoSung> dsCauHoi) {
-                Map<Long, CauHoiBoSung> cauHoiMap = dsCauHoi.stream()
-                                .collect(java.util.stream.Collectors.toMap(CauHoiBoSung::getMaCauHoiBaiBoSung, c -> c));
+                Map<Long, CauHoiChuan> cauHoiMap = new HashMap<>();
+                dsCauHoi.forEach(c -> cauHoiMap.put(c.getMaCauHoiBaiBoSung(), tuCauHoiBoSung(c)));
+                return dungKetQuaTuLuu(maKetQua, diem, dat, diemToiThieu, thoiDiem, chiTietLuu, cauHoiMap);
+        }
+
+        private PhanHoiKetQuaQuiz dungKetQuaTuLuu(Long maKetQua, int diem, boolean dat, int diemToiThieu,
+                        java.time.LocalDateTime thoiDiem, List<ChiTietDapAnDaChon> chiTietLuu,
+                        Map<Long, CauHoiChuan> cauHoiMap) {
                 List<PhanHoiCauHoiDaCham> chiTiet = chiTietLuu.stream().map(ct -> {
-                        var cauHoi = cauHoiMap.get(ct.maCauHoi());
-                        return new PhanHoiCauHoiDaCham(ct.maCauHoi(),
-                                        cauHoi != null ? cauHoi.getNoiDung() : "—",
-                                        cauHoi != null ? cauHoi.getDapAn().stream()
-                                                        .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), d.dapAnDung()))
-                                                        .toList() : List.of(),
-                                        ct.dsMaDapAnDaChon(), ct.dapAnDung());
+                        CauHoiChuan cauHoi = cauHoiMap.get(ct.maCauHoi());
+                        if (cauHoi != null) {
+                                return sangCauHoiDaCham(cauHoi, ct);
+                        }
+                        // Câu hỏi đã bị xóa khỏi đề sau khi học viên làm bài — vẫn hiện kết quả cũ.
+                        return new PhanHoiCauHoiDaCham(ct.maCauHoi(), "—", List.of(), ct.dsMaDapAnDaChon(),
+                                        Boolean.TRUE.equals(ct.dapAnDung()), null, ct.traLoiVanBan(),
+                                        capGhepPhanHoi(ct));
                 }).toList();
                 return new PhanHoiKetQuaQuiz(maKetQua, diem, dat, diemToiThieu, thoiDiem, chiTiet);
         }
@@ -416,7 +454,7 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
                                                 c.maCauHoi(), c.noiDung(), c.viTri(), c.loaiCauHoi(),
                                                 c.dapAn().stream()
                                                                 .map(d -> new PhanHoiDapAnChoAdmin(d.id(), d.noiDung(),
-                                                                                d.dapAnDung()))
+                                                                                d.dapAnDung(), d.noiDungGhep()))
                                                                 .toList()))
                                 .toList();
                 return new PhanHoiDeKiemTraChoAdmin("GOC", bkt.maBaiKiemTra(), baiHoc.tieuDe(),
@@ -441,7 +479,7 @@ class KiemTraTrongLopDichVuImpl implements KiemTraTrongLopDichVu {
                                                 c.getLoaiCauHoi().name(),
                                                 c.getDapAn().stream()
                                                                 .map(d -> new PhanHoiDapAnChoAdmin(d.id(), d.noiDung(),
-                                                                                d.dapAnDung()))
+                                                                                d.dapAnDung(), d.noiDungGhep()))
                                                                 .toList()))
                                 .toList();
 

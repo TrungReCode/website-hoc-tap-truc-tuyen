@@ -2,7 +2,6 @@ package com.elearning.choKhoaHoc.ungDung.impl;
 
 import com.elearning.choKhoaHoc.giaoDien.dto.phanHoi.*;
 import com.elearning.choKhoaHoc.giaoDien.dto.yeuCau.YeuCauCapNhatBaiHoc;
-import com.elearning.choKhoaHoc.giaoDien.dto.yeuCau.YeuCauDapAn;
 import com.elearning.choKhoaHoc.giaoDien.dto.yeuCau.YeuCauTaoBaiHoc;
 import com.elearning.choKhoaHoc.giaoDien.dto.yeuCau.YeuCauTaoCauHoi;
 import com.elearning.choKhoaHoc.giaoDien.dto.yeuCau.YeuCauTaoChuong;
@@ -19,6 +18,7 @@ import com.elearning.choKhoaHoc.mienDomain.enumDomain.LoaiBaiHoc;
 import com.elearning.choKhoaHoc.mienDomain.enumDomain.LoaiCauHoi;
 import com.elearning.choKhoaHoc.mienDomain.enumDomain.TrangThaiKhoaHoc;
 import com.elearning.choKhoaHoc.ungDung.QuanLyNoiDungDichVu;
+import com.elearning.dungChung.cauHoi.QuyTacCauHoi;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeDuLieuKhongHopLe;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeKhongCoQuyen;
 import com.elearning.dungChung.ngoaiLe.NgoaiLeKhongTimThay;
@@ -281,17 +281,15 @@ class QuanLyNoiDungDichVuImpl implements QuanLyNoiDungDichVu {
         BaiKiemTra baiKiemTra = baiKiemTraKho.findByBaiHoc_MaBaiHoc(maBaiHoc)
                 .orElseThrow(() -> NgoaiLeKhongTimThay.cuaTaiNguyen("bài kiểm tra của bài học", maBaiHoc));
 
-        if (yeuCau.dapAn() == null || yeuCau.dapAn().size() < 2) {
-            throw new NgoaiLeDuLieuKhongHopLe("Câu hỏi cần ít nhất 2 phương án trả lời");
-        }
-        boolean coDapAnDung = yeuCau.dapAn().stream().anyMatch(YeuCauDapAn::dapAnDung);
-        if (!coDapAnDung) {
-            throw new NgoaiLeDuLieuKhongHopLe("Câu hỏi cần có ít nhất 1 đáp án đúng");
-        }
-
         LoaiCauHoi loaiCauHoi = chuyenDoiLoaiCauHoi(yeuCau.loaiCauHoi());
+        // Quy tắc hợp lệ theo từng dạng câu hỏi (chọn đáp án / trả lời ngắn / sắp xếp /
+        // ghép cặp) dùng chung với quiz bổ sung — xem QuyTacCauHoi.
+        QuyTacCauHoi.kiemTraHopLe(loaiCauHoi.name(), yeuCau.dapAn() == null ? null : yeuCau.dapAn().stream()
+                .map(d -> new QuyTacCauHoi.DapAn(d.id(), d.noiDung(), d.noiDungGhep(), d.dapAnDung()))
+                .toList());
+
         List<DapAnCauHoi> dapAn = yeuCau.dapAn().stream()
-                .map(d -> new DapAnCauHoi(d.id(), d.noiDung(), d.dapAnDung()))
+                .map(d -> new DapAnCauHoi(d.id(), d.noiDung(), d.dapAnDung(), d.noiDungGhep()))
                 .toList();
 
         CauHoi cauHoi = new CauHoi(baiKiemTra, yeuCau.noiDung(), yeuCau.viTri(), loaiCauHoi, dapAn);
@@ -408,9 +406,24 @@ class QuanLyNoiDungDichVuImpl implements QuanLyNoiDungDichVu {
     }
 
     private PhanHoiCauHoi sangPhanHoiCauHoi(CauHoi c, boolean loDapAnDung) {
-        List<PhanHoiDapAn> dapAn = c.getDapAn().stream()
-                .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), loDapAnDung ? d.dapAnDung() : null))
-                .toList();
+        List<PhanHoiDapAn> dapAn;
+        if (loDapAnDung) {
+            dapAn = c.getDapAn().stream()
+                    .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), d.dapAnDung(), d.noiDungGhep()))
+                    .toList();
+        } else {
+            // Đường hiển thị cho học viên/khách: ngoài cờ đúng/sai còn phải che các dạng mà
+            // CHÍNH CẤU TRÚC dữ liệu lộ đáp án — TRA_LOI_NGAN (noiDung từng phần tử là đáp án
+            // chấp nhận), SAP_XEP (thứ tự lưu là thứ tự đúng), GHEP_CAP (noiDungGhep là vế phải
+            // ứng với vế trái). QuyTacCauHoi lo việc này để 2 hệ thống quiz che giống hệt nhau.
+            List<QuyTacCauHoi.DapAn> trungLap = c.getDapAn().stream()
+                    .map(d -> new QuyTacCauHoi.DapAn(d.id(), d.noiDung(), d.noiDungGhep(),
+                            Boolean.TRUE.equals(d.dapAnDung())))
+                    .toList();
+            dapAn = QuyTacCauHoi.anDapAnChoHocVien(c.getLoaiCauHoi().name(), trungLap).stream()
+                    .map(d -> new PhanHoiDapAn(d.id(), d.noiDung(), null, null))
+                    .toList();
+        }
         return new PhanHoiCauHoi(c.getMaCauHoi(), c.getNoiDung(), c.getViTri(), c.getLoaiCauHoi().name(), dapAn);
     }
 }
