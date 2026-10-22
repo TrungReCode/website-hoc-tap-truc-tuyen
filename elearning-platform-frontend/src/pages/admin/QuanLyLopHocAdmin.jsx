@@ -5,6 +5,7 @@ import { layGiaoTrinhChoAdmin, layDeBaiQuizChoAdmin } from '../../services/giaoT
 import { layThongBaoLoi } from '../../utils/layThongBaoLoi';
 import DashboardShell, { layNavTheoVaiTro } from '../../components/DashboardShell';
 import XemTepTinModal from '../../components/XemTepTinModal';
+import DapAnXemTruoc from '../../components/quiz/DapAnXemTruoc';
 import '../../components/XemTepTinModal.css';
 
 const TABS = [
@@ -282,11 +283,7 @@ export default function QuanLyLopHocAdmin() {
                 {deQuiz.danhSachCauHoi.map((c, idx) => (
                   <div key={c.maCauHoi} className="preview-quiz-question">
                     <div className="preview-quiz-question-text">{idx + 1}. {c.noiDung}</div>
-                    {c.dapAn.map((d) => (
-                      <div key={d.id} className={`preview-quiz-option ${d.dapAnDung ? 'correct' : ''}`}>
-                        {d.dapAnDung && <i className="ti ti-check" aria-hidden="true"></i>} {d.noiDung}
-                      </div>
-                    ))}
+                    <DapAnXemTruoc cauHoi={c} />
                   </div>
                 ))}
               </div>

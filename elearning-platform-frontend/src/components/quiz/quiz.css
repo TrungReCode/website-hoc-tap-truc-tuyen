@@ -1,0 +1,37 @@
+/* Giao diện cho các dạng câu hỏi ngoài trắc nghiệm: trả lời ngắn, sắp xếp, ghép cặp.
+   Dùng lại biến màu và lớp .quiz-option sẵn có ở styles/index.css. */
+
+.qz-tip { font-size: 12px; color: var(--text-3); margin: 2px 0 8px; }
+.qz-loai-badge { font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-light);
+  border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+
+/* ── Sắp xếp ── */
+.qz-sx-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 8px; background: #fff; font-size: 13px; }
+.qz-sx-num { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); display: flex;
+  align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; background: var(--surface); }
+.qz-sx-btns { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
+.qz-btn-mui { width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px; background: #fff;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.qz-btn-mui:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.qz-btn-mui:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── Ghép cặp ── */
+.qz-gc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.qz-gc-trai { flex: 1 1 180px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); font-size: 13px; }
+.qz-gc-select { flex: 1 1 180px; }
+
+/* ── Xem lại kết quả ── */
+.qz-kq-nhan { font-weight: 600; margin-right: 6px; }
+.qz-kq-dung { margin-left: auto; font-size: 12px; color: var(--success); font-weight: 600; }
+
+/* ── Trình soạn của giảng viên ── */
+.qz-edit-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+.qz-edit-row .form-input { flex: 1; min-width: 0; }
+.qz-edit-num { width: 22px; text-align: center; font-size: 12px; color: var(--text-3); flex-shrink: 0; }
+.qz-edit-noi { color: var(--text-3); flex-shrink: 0; }
+
+/* ── Xem trước đáp án (giảng viên/quản trị) ── */
+.qz-xt-cau { margin-bottom: 14px; }
+.qz-xt-tieude { font-size: 13px; font-weight: 500; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

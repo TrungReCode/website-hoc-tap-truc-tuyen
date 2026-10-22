@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import CauHoiKetQua from '../../components/quiz/CauHoiKetQua';
 
 const RING_R = 44;
 const RING_C = 2 * Math.PI * RING_R;
@@ -100,29 +101,7 @@ export default function KetQuaKiemTraTuHoc() {
           {danhSachHienThi.map((c) => {
             const idx = ketQua.chiTietCauHoi.indexOf(c);
             return (
-              <div key={c.maCauHoi} style={{ marginBottom: 14, marginTop: 10 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <i className={`ti ${c.dungCauNay ? 'ti-circle-check' : 'ti-circle-x'}`}
-                     style={{ color: c.dungCauNay ? 'var(--success)' : 'var(--danger)' }} aria-hidden="true"></i>
-                  Câu {idx + 1}: {c.noiDung}
-                </div>
-                {c.dapAn.map((d, di) => {
-                  const thuTu = ['A', 'B', 'C', 'D', 'E'][di] || String(di + 1);
-                  const daChon = c.dsMaDapAnDaChon?.includes(d.id);
-                  const dungDap = d.dapAnDung;
-                  let cls = 'quiz-option';
-                  if (daChon && dungDap) cls += ' correct';
-                  else if (daChon && !dungDap) cls += ' wrong';
-                  else if (!daChon && dungDap) cls += ' correct';
-                  return (
-                    <div key={d.id} className={cls} style={{ cursor: 'default' }}>
-                      <span className="opt-letter">{thuTu}</span>
-                      {d.noiDung}
-                      {dungDap && <i className="ti ti-check" style={{ marginLeft: 'auto', color: 'var(--success)' }} aria-hidden="true"></i>}
-                    </div>
-                  );
-                })}
-              </div>
+              <CauHoiKetQua key={c.maCauHoi} c={c} soThuTu={idx + 1} />
             );
           })}
           {danhSachHienThi.length === 0 && (

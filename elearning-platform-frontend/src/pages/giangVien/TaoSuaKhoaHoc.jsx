@@ -5,6 +5,8 @@ import { taoKhoaHoc, capNhatKhoaHoc, layChiTietChoTacGia, guiKiemDuyet, taiLenAn
 import { themChuong, xoaChuong, themBaiHoc, xoaBaiHoc, themCauHoi } from '../../services/noiDungKhoaHocService';
 import ThanhTienDoTaiLen from '../../components/ThanhTienDoTaiLen';
 import { layThongBaoLoi } from '../../utils/layThongBaoLoi';
+import BoSoanCauHoi from '../../components/quiz/BoSoanCauHoi';
+import { cauHoiMoi, kiemTraSoanThao, taoPayloadCauHoi } from '../../utils/cauHoi';
 
 const FORM_RONG = { tieuDe: '', mieuTa: '', maDanhMuc: '', gia: 0, phiDayHoc: '', anhBia: '' };
 
@@ -549,53 +551,27 @@ function FormThemBaiHoc({ maChuong, viTriTiepTheo, onXong, onHuy }) {
   );
 }
 
-/** Thêm câu hỏi trắc nghiệm cho bài học loại QUIZ vừa tạo, có thể thêm nhiều câu liên tiếp. */
+/** Thêm câu hỏi (trắc nghiệm, đúng/sai, trả lời ngắn, sắp xếp, ghép cặp) cho bài học loại QUIZ vừa tạo, có thể thêm nhiều câu liên tiếp. */
 function FormThemCauHoi({ maBaiHoc, onXongTatCa }) {
-  const [noiDung, setNoiDung] = useState('');
-  const [loaiCauHoi, setLoaiCauHoi] = useState('MOT_DAP_AN');
-  const [dapAn, setDapAn] = useState([
-    { id: 1, noiDung: '', dapAnDung: false },
-    { id: 2, noiDung: '', dapAnDung: false },
-  ]);
+  const [cau, setCau] = useState(() => cauHoiMoi());
   const [soCauDaThem, setSoCauDaThem] = useState(0);
   const [dangXuLy, setDangXuLy] = useState(false);
   const [dangHuy, setDangHuy] = useState(false);
   const [loi, setLoi] = useState('');
 
-  function capNhatDapAn(i, truong, giaTri) {
-    setDapAn(dapAn.map((d, idx) => (idx === i ? { ...d, [truong]: giaTri } : d)));
-  }
-
-  function themDongDapAn() {
-    setDapAn([...dapAn, { id: dapAn.length + 1, noiDung: '', dapAnDung: false }]);
-  }
-
   async function xuLyThemCauHoi(e) {
     e.preventDefault();
-    if (!noiDung.trim() || dapAn.some((d) => !d.noiDung.trim())) {
-      setLoi('Vui lòng nhập đầy đủ nội dung câu hỏi và các phương án');
-      return;
-    }
-    if (!dapAn.some((d) => d.dapAnDung)) {
-      setLoi('Cần chọn ít nhất 1 đáp án đúng');
-      return;
-    }
-    const soDapAnDung = dapAn.filter((d) => d.dapAnDung).length;
-    if (loaiCauHoi === 'MOT_DAP_AN' && soDapAnDung > 1) {
-      setLoi('Câu hỏi "1 đáp án đúng" chỉ được đánh dấu đúng cho đúng 1 phương án. Nếu muốn nhiều đáp án đúng, đổi loại câu hỏi thành "Nhiều đáp án đúng".');
+    const loiForm = kiemTraSoanThao(cau);
+    if (loiForm) {
+      setLoi(loiForm);
       return;
     }
     setLoi('');
     setDangXuLy(true);
     try {
-      await themCauHoi(maBaiHoc, { noiDung, viTri: soCauDaThem + 1, loaiCauHoi, dapAn });
+      await themCauHoi(maBaiHoc, taoPayloadCauHoi(cau, soCauDaThem + 1));
       setSoCauDaThem(soCauDaThem + 1);
-      setNoiDung('');
-      setLoaiCauHoi('MOT_DAP_AN');
-      setDapAn([
-        { id: 1, noiDung: '', dapAnDung: false },
-        { id: 2, noiDung: '', dapAnDung: false },
-      ]);
+      setCau(cauHoiMoi());
     } catch (err) {
       setLoi(layThongBaoLoi(err));
     } finally {
@@ -624,7 +600,7 @@ function FormThemCauHoi({ maBaiHoc, onXongTatCa }) {
   return (
     <div className="card sm" style={{ background: 'var(--surface)', marginTop: 8 }}>
       <div className="card-sub" style={{ marginBottom: 10 }}>
-        Đã thêm {soCauDaThem} câu hỏi. Thêm câu hỏi cho bài kiểm tra (đánh dấu phương án đúng bằng cách bấm vào nó):
+        Đã thêm {soCauDaThem} câu hỏi. Thêm câu hỏi cho bài kiểm tra — chọn dạng câu hỏi rồi nhập nội dung và đáp án:
         {soCauDaThem === 0 && (
           <div style={{ color: 'var(--danger)', marginTop: 4, fontSize: 12 }}>
             Bài kiểm tra chưa có câu hỏi nào sẽ <strong>không được lưu</strong> - nhấn "Xong" lúc này sẽ tự hủy bài kiểm tra.
@@ -633,36 +609,8 @@ function FormThemCauHoi({ maBaiHoc, onXongTatCa }) {
       </div>
       {loi && <div className="alert alert-danger">{loi}</div>}
       <form onSubmit={xuLyThemCauHoi}>
-        <div className="form-group">
-          <input className="form-input" placeholder="Nội dung câu hỏi" value={noiDung} onChange={(e) => setNoiDung(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Loại câu hỏi</label>
-          <select className="form-input" value={loaiCauHoi} onChange={(e) => setLoaiCauHoi(e.target.value)}>
-            <option value="MOT_DAP_AN">1 đáp án đúng (chọn 1)</option>
-            <option value="NHIEU_DAP_AN">Nhiều đáp án đúng (chọn nhiều)</option>
-            <option value="DUNG_SAI">Đúng / Sai</option>
-          </select>
-        </div>
-        {dapAn.map((d, i) => (
-          <div key={d.id} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'center' }}>            <input
-              type="checkbox"
-              checked={d.dapAnDung}
-              onChange={(e) => capNhatDapAn(i, 'dapAnDung', e.target.checked)}
-              title="Đánh dấu là đáp án đúng"
-            />
-            <input
-              className="form-input"
-              placeholder={`Phương án ${i + 1}`}
-              value={d.noiDung}
-              onChange={(e) => capNhatDapAn(i, 'noiDung', e.target.value)}
-            />
-          </div>
-        ))}
+        <BoSoanCauHoi value={cau} onChange={setCau} disabled={dangXuLy} />
         <div className="btn-row">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={themDongDapAn}>
-            + Thêm phương án
-          </button>
           <button type="submit" className="btn btn-primary btn-sm" disabled={dangXuLy}>
             {dangXuLy ? 'Đang lưu...' : 'Lưu câu hỏi & thêm câu tiếp theo'}
           </button>

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import './XemTepTinModal.css';
 import TrinhXemPdf from './TrinhXemPdf';
 import TrinhXemDocx from './TrinhXemDocx';
+import DapAnXemTruoc from './quiz/DapAnXemTruoc';
 
 // Khoảng cách tối thiểu giữa 2 lần gọi API lưu vị trí xem video — timeupdate
 // bắn rất dày (~4 lần/giây), không thể gọi API mỗi lần.
@@ -100,14 +101,7 @@ export default function XemTepTinModal({ baiHoc, onClose, onHoanThanh, onCapNhat
                     {cauHois.map((c, idx) => (
                         <div key={c.maCauHoi} className="preview-quiz-question">
                             <div className="preview-quiz-question-text">{idx + 1}. {c.noiDung}</div>
-                            {c.dapAn?.map(d => (
-                                <div
-                                    key={d.id}
-                                    className={`preview-quiz-option ${d.dapAnDung ? 'correct' : ''}`}
-                                >
-                                    {d.dapAnDung && <i className="ti ti-check" aria-hidden="true"></i>} {d.noiDung}
-                                </div>
-                            ))}
+                            <DapAnXemTruoc cauHoi={c} />
                         </div>
                     ))}
                 </div>

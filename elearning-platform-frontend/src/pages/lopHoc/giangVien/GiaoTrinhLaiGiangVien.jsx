@@ -11,6 +11,9 @@ import ThanhTienDoTaiLen from '../../../components/ThanhTienDoTaiLen';
 // 1. IMPORT MODAL XEM TỆP TIN
 import XemTepTinModal from '../../../components/XemTepTinModal';
 import '../../../components/XemTepTinModal.css';
+import BoSoanCauHoi from '../../../components/quiz/BoSoanCauHoi';
+import DapAnXemTruoc from '../../../components/quiz/DapAnXemTruoc';
+import { cauHoiMoi, kiemTraSoanThao, taoPayloadCauHoi } from '../../../utils/cauHoi';
 
 const BIEU_TUONG = { VIDEO: 'ti-player-play', PDF: 'ti-file-text', DOC: 'ti-file-text', QUIZ: 'ti-help-circle', LINK: 'ti-link', ZIP: 'ti-file-zip' };
 
@@ -282,10 +285,8 @@ function XemDeGoc({ maLopHoc, muc, onClose }) {
               {deBai.danhSachCauHoi.map((c, idx) => (
                 <div key={c.maCauHoi} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12 }}>
                   <div style={{ fontWeight: 500, fontSize: 13.5 }}>{idx + 1}. {c.noiDung}</div>
-                  <div style={{ marginTop: 8, display: 'grid', gap: 4 }}>
-                    {c.dapAn.map(d => (
-                      <div key={d.id} style={{ fontSize: 13, padding: '4px 8px' }}>{d.noiDung}</div>
-                    ))}
+                  <div style={{ marginTop: 8 }}>
+                    <DapAnXemTruoc cauHoi={c} />
                   </div>
                 </div>
               ))}
@@ -396,15 +397,7 @@ function FormThemBaiBoSung({ maLopHoc, viTriCuoiDanh, onXong, onHuy }) {
 /* ══════════════════════ Quản lý câu hỏi — Quiz bổ sung ══════════════════════ */
 
 function CauHoiRong(viTri) {
-  return {
-    noiDung: '',
-    loaiCauHoi: 'MOT_DAP_AN',
-    viTri,
-    dapAn: [
-      { id: 1, noiDung: '', dapAnDung: true },
-      { id: 2, noiDung: '', dapAnDung: false },
-    ],
-  };
+  return { ...cauHoiMoi(), viTri };
 }
 
 function QuanLyCauHoiBoSung({ muc, onClose }) {
@@ -429,52 +422,15 @@ function QuanLyCauHoiBoSung({ muc, onClose }) {
     setHienFormMoi(true);
   }
 
-  function capNhatDapAn(idx, patch) {
-    setCauMoi(prev => ({
-      ...prev,
-      dapAn: prev.dapAn.map((d, i) => (i === idx ? { ...d, ...patch } : d)),
-    }));
-  }
-
-  function chonDapAnDung(idx) {
-    setCauMoi(prev => ({
-      ...prev,
-      dapAn: prev.dapAn.map((d, i) => ({
-        ...d,
-        dapAnDung: prev.loaiCauHoi === 'NHIEU_DAP_AN' ? (i === idx ? !d.dapAnDung : d.dapAnDung) : i === idx,
-      })),
-    }));
-  }
-
-  function themDapAn() {
-    setCauMoi(prev => ({
-      ...prev,
-      dapAn: [...prev.dapAn, { id: prev.dapAn.length + 1, noiDung: '', dapAnDung: false }],
-    }));
-  }
-
-  function xoaDapAn(idx) {
-    setCauMoi(prev => {
-      if (prev.dapAn.length <= 2) return prev; // tối thiểu 2 phương án
-      return { ...prev, dapAn: prev.dapAn.filter((_, i) => i !== idx) };
-    });
-  }
-
   async function xuLyGuiCauHoi(e) {
     e.preventDefault();
     setLoi('');
-    if (!cauMoi.noiDung.trim()) { setLoi('Vui lòng nhập nội dung câu hỏi'); return; }
-    if (cauMoi.dapAn.some(d => !d.noiDung.trim())) { setLoi('Vui lòng nhập đầy đủ nội dung các phương án'); return; }
-    if (!cauMoi.dapAn.some(d => d.dapAnDung)) { setLoi('Cần chọn ít nhất 1 đáp án đúng'); return; }
+    const loiForm = kiemTraSoanThao(cauMoi);
+    if (loiForm) { setLoi(loiForm); return; }
 
     setDangGui(true);
     try {
-      await themCauHoiBoSung(muc.maThamChieu, {
-        noiDung: cauMoi.noiDung.trim(),
-        viTri: cauMoi.viTri,
-        loaiCauHoi: cauMoi.loaiCauHoi,
-        dapAn: cauMoi.dapAn,
-      });
+      await themCauHoiBoSung(muc.maThamChieu, taoPayloadCauHoi(cauMoi, cauMoi.viTri));
       setHienFormMoi(false);
       taiLai();
     } catch (err) {
@@ -526,60 +482,15 @@ function QuanLyCauHoiBoSung({ muc, onClose }) {
                   <i className="ti ti-trash" aria-hidden="true"></i>
                 </button>
               </div>
-              <div style={{ marginTop: 8, display: 'grid', gap: 4 }}>
-                {c.dapAn.map(d => (
-                  <div key={d.id} style={{
-                    fontSize: 13, padding: '4px 8px', borderRadius: 4,
-                    background: d.dapAnDung ? '#dcfce7' : 'transparent',
-                    color: d.dapAnDung ? '#15803d' : 'var(--text)',
-                  }}>
-                    {d.dapAnDung && <i className="ti ti-check" aria-hidden="true"></i>} {d.noiDung}
-                  </div>
-                ))}
+              <div style={{ marginTop: 8 }}>
+                <DapAnXemTruoc cauHoi={c} />
               </div>
             </div>
           ))}
 
           {hienFormMoi ? (
             <form onSubmit={xuLyGuiCauHoi} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 12, background: 'var(--surface)' }}>
-              <div className="form-group">
-                <label className="form-label">Nội dung câu hỏi</label>
-                <input className="form-input" value={cauMoi.noiDung}
-                  onChange={e => setCauMoi(prev => ({ ...prev, noiDung: e.target.value }))} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Loại câu hỏi</label>
-                <select className="form-input" value={cauMoi.loaiCauHoi}
-                  onChange={e => setCauMoi(prev => ({ ...prev, loaiCauHoi: e.target.value }))}>
-                  <option value="MOT_DAP_AN">Một đáp án đúng</option>
-                  <option value="NHIEU_DAP_AN">Nhiều đáp án đúng</option>
-                  <option value="DUNG_SAI">Đúng / Sai</option>
-                </select>
-              </div>
-
-              <label className="form-label">Phương án trả lời</label>
-              {cauMoi.dapAn.map((d, idx) => (
-                <div key={d.id} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-                  <input
-                    type={cauMoi.loaiCauHoi === 'NHIEU_DAP_AN' ? 'checkbox' : 'radio'}
-                    checked={d.dapAnDung}
-                    onChange={() => chonDapAnDung(idx)}
-                  />
-                  <input className="form-input" style={{ flex: 1 }} value={d.noiDung}
-                    onChange={e => capNhatDapAn(idx, { noiDung: e.target.value })}
-                    placeholder={`Phương án ${idx + 1}`} />
-                  {cauMoi.dapAn.length > 2 && (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => xoaDapAn(idx)}>
-                      <i className="ti ti-x" aria-hidden="true"></i>
-                    </button>
-                  )}
-                </div>
-              ))}
-              {cauMoi.loaiCauHoi !== 'DUNG_SAI' && (
-                <button type="button" className="btn btn-secondary btn-sm" onClick={themDapAn} style={{ marginBottom: 10 }}>
-                  <i className="ti ti-plus" aria-hidden="true"></i> Thêm phương án
-                </button>
-              )}
+              <BoSoanCauHoi value={cauMoi} onChange={setCauMoi} disabled={dangGui} />
 
               <div className="btn-row">
                 <button type="submit" className="btn btn-primary btn-sm" disabled={dangGui}>

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { layDeBaiTuHoc, nopBaiTuHoc } from '../../services/quizTuHocService';
 import { layThongBaoLoi } from '../../utils/layThongBaoLoi';
+import CauHoiLamBai from '../../components/quiz/CauHoiLamBai';
+import { daTraLoi, taoYeuCauTraLoi } from '../../utils/cauHoi';
 
 // Bản sao gần như y hệt LamBaiKiemTra.jsx (lopHoc) nhưng dùng API tự học
 // (không cần maLopHoc) — xem giải thích lý do có API riêng ở
@@ -10,7 +12,8 @@ export default function LamBaiKiemTraTuHoc() {
   const { maKhoaHoc, maBaiHoc } = useParams();
   const navigate = useNavigate();
   const [deBai, setDeBai] = useState(null);
-  const [dapAnDaChon, setDapAnDaChon] = useState({});
+  // Bài làm theo từng câu: { [maCauHoi]: { ids, vanBan, capGhep } } — xem utils/cauHoi.js
+  const [traLoiTheoCau, setTraLoiTheoCau] = useState({});
   const [giayConLai, setGiayConLai] = useState(null);
   const [dangNop, setDangNop] = useState(false);
   const [loi, setLoi] = useState('');
@@ -43,15 +46,8 @@ export default function LamBaiKiemTraTuHoc() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [giayConLai !== null]);
 
-  function chonDapAn(maCauHoi, maDapAn, loaiCauHoi) {
-    setDapAnDaChon(prev => {
-      const hienTai = prev[maCauHoi] || [];
-      if (loaiCauHoi === 'NHIEU_DAP_AN') {
-        const moi = hienTai.includes(maDapAn) ? hienTai.filter(x => x !== maDapAn) : [...hienTai, maDapAn];
-        return { ...prev, [maCauHoi]: moi };
-      }
-      return { ...prev, [maCauHoi]: [maDapAn] };
-    });
+  function capNhatTraLoi(maCauHoi, traLoiMoi) {
+    setTraLoiTheoCau(prev => ({ ...prev, [maCauHoi]: traLoiMoi }));
   }
 
   function cuonDenCauHoi(maCauHoi) {
@@ -61,7 +57,7 @@ export default function LamBaiKiemTraTuHoc() {
   async function xuLyNopBai(tuDong = false) {
     if (daNopeRef.current) return;
 
-    const soCauChuaTraLoi = (deBai?.danhSachCauHoi || []).filter(c => !(dapAnDaChon[c.maCauHoi]?.length)).length;
+    const soCauChuaTraLoi = (deBai?.danhSachCauHoi || []).filter(c => !daTraLoi(c, traLoiTheoCau[c.maCauHoi])).length;
     if (!tuDong && soCauChuaTraLoi > 0) {
       const dongY = confirm(`Bạn còn ${soCauChuaTraLoi} câu chưa trả lời. Vẫn nộp bài?`);
       if (!dongY) return;
@@ -70,10 +66,7 @@ export default function LamBaiKiemTraTuHoc() {
     daNopeRef.current = true;
     clearInterval(intervalRef.current);
     setDangNop(true);
-    const cauTraLoi = (deBai?.danhSachCauHoi || []).map(c => ({
-      maCauHoi: c.maCauHoi,
-      dsMaDapAnDaChon: dapAnDaChon[c.maCauHoi] || [],
-    }));
+    const cauTraLoi = (deBai?.danhSachCauHoi || []).map(c => taoYeuCauTraLoi(c, traLoiTheoCau[c.maCauHoi]));
     try {
       const ketQua = await nopBaiTuHoc(maBaiHoc, cauTraLoi);
       navigate(`/khoa-hoc-cua-toi/${maKhoaHoc}/quiz/${maBaiHoc}/ket-qua`, { state: { ketQua } });
@@ -93,7 +86,7 @@ export default function LamBaiKiemTraTuHoc() {
   if (!deBai && !loi) return <div className="empty-state">Đang tải đề bài...</div>;
 
   const tongSoCau = deBai?.danhSachCauHoi?.length || 0;
-  const soCauDaTraLoi = deBai?.danhSachCauHoi?.filter(c => dapAnDaChon[c.maCauHoi]?.length).length || 0;
+  const soCauDaTraLoi = deBai?.danhSachCauHoi?.filter(c => daTraLoi(c, traLoiTheoCau[c.maCauHoi])).length || 0;
   const phanTramTraLoi = tongSoCau > 0 ? Math.round((soCauDaTraLoi / tongSoCau) * 100) : 0;
 
   return (
@@ -120,9 +113,18 @@ export default function LamBaiKiemTraTuHoc() {
             {deBai.danhSachCauHoi.map((c, idx) => (
               <div
                 key={c.maCauHoi}
-                className={`qz-nav-chip ${dapAnDaChon[c.maCauHoi]?.length ? 'answered' : ''}`}
+                className={`qz-nav-chip ${daTraLoi(c, traLoiTheoCau[c.maCauHoi]) ? 'answered' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Đi tới câu ${idx + 1}`}
                 onClick={() => cuonDenCauHoi(c.maCauHoi)}
-                title={`Câu ${idx + 1}${dapAnDaChon[c.maCauHoi]?.length ? ' — đã trả lời' : ' — chưa trả lời'}`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    cuonDenCauHoi(c.maCauHoi);
+                  }
+                }}
+                title={`Câu ${idx + 1}${daTraLoi(c, traLoiTheoCau[c.maCauHoi]) ? ' — đã trả lời' : ' — chưa trả lời'}`}
               >
                 {idx + 1}
               </div>
@@ -141,31 +143,15 @@ export default function LamBaiKiemTraTuHoc() {
               {deBai.thoiGian && ` · Thời gian: ${deBai.thoiGian} phút`}
             </div>
 
-            {deBai.danhSachCauHoi.map((c, idx) => {
-              const daChon = dapAnDaChon[c.maCauHoi] || [];
-              return (
-                <div key={c.maCauHoi} id={`cau-hoi-${c.maCauHoi}`} className="card sm" style={{ marginBottom: 12, scrollMarginTop: 140 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 10, display: 'flex', gap: 8 }}>
-                    <span>{idx + 1}. {c.noiDung}</span>
-                    {!daChon.length && <span className="badge badge-amber" style={{ flexShrink: 0 }}>Chưa trả lời</span>}
-                  </div>
-                  {c.dapAn.map((d, di) => {
-                    const thuTu = ['A', 'B', 'C', 'D', 'E'][di] || String(di + 1);
-                    const daChonNay = daChon.includes(d.id);
-                    return (
-                      <div
-                        key={d.id}
-                        className={`quiz-option ${daChonNay ? 'selected' : ''}`}
-                        onClick={() => chonDapAn(c.maCauHoi, d.id, c.loaiCauHoi)}
-                      >
-                        <span className="opt-letter">{thuTu}</span>
-                        {d.noiDung}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+            {deBai.danhSachCauHoi.map((c, idx) => (
+              <CauHoiLamBai
+                key={c.maCauHoi}
+                cauHoi={c}
+                soThuTu={idx + 1}
+                traLoi={traLoiTheoCau[c.maCauHoi]}
+                onChange={(traLoiMoi) => capNhatTraLoi(c.maCauHoi, traLoiMoi)}
+              />
+            ))}
 
             <div className="action-bar">
               <button className="btn btn-secondary" onClick={() => navigate(-1)} disabled={dangNop}>
